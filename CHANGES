@@ -16,6 +16,10 @@ Version 3.0.3 (under development)
         # more efficient to load data with a defined row_class
         full_table = lt.csv_import("large_data_set.csv", row_class=SampleRecord)
 
+- Added the `multi_directional_dict.py` example, to illustrate how a `Table`
+  with multiple unique keys acts like a bidirectional or multi-directional dict,
+  without having to implement or synch multiple dicts.
+
 - Better error message when importing a CSV file with too few names in the header line.
 
 - Add optional arguments to compress JSON streamed output (as when writing JSONL files)

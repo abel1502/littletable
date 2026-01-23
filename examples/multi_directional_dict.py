@@ -33,7 +33,7 @@ employees.create_index("employee_id", unique=True)
 employees.create_index("tax_id", unique=True)
 employees.create_index("primary_phone", unique=True)
 
-# Accessing the table by non-unique key behaves like defaultdict(Table)
+# Accessing the table by non-unique key behaves like a defaultdict(Table)
 # - if the key is present, a new Table is returned containing the matching records
 #   (with the same indexes defined as in the original table)
 # - if the key is absent, an empty Table is returned
