@@ -7,7 +7,7 @@ name = "littletable"
 version = "3.1.0"
 description = "Python in-memory ORM database"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = "MIT"
 authors = [
   { name = "Paul McGuire", email = "ptmcg@austin.rr.com" }
@@ -28,9 +28,6 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
