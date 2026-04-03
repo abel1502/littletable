@@ -3,7 +3,8 @@ Change History
 
 Version 3.1.0 (under development)
 ---------------------------------
-- Dropped support for Python versions earlier than 3.12.
+- Dropped support for Python versions earlier than 3.12. Updated type annotations to
+  replace `Union`, `Optional`, and `Generic` types with their respective new syntax.
 
 - Added support for Python 3.14.
 

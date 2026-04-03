@@ -148,8 +148,8 @@ from pathlib import Path
 from types import SimpleNamespace
 import urllib.request
 from typing import (
-    Callable, Any, TextIO, Union, Optional, Iterable, Iterator,
-    Generic, TypeVar, Type, cast, Tuple, overload
+    Callable, Any, TextIO, Iterable, Iterator,
+    TypeVar, Type, cast, Tuple, overload, Self
 )
 
 from rich import box
@@ -162,7 +162,7 @@ __version__ = (
         __version_info__.release_level == "final"
     ]
 )
-__version_time__ = "03 Apr 2026 05:19 UTC"
+__version_time__ = "03 Apr 2026 06:01 UTC"
 __author__ = "Paul McGuire <ptmcg@austin.rr.com>"
 
 
@@ -242,7 +242,7 @@ class attrgetter:  # noqa
     """
     __slots__ = ('_items', '_defaults', '_call')
 
-    def __init__(self, item: str, /, *items, defaults: dict[str, Any] = None):
+    def __init__(self, item: str, /, *items, defaults: dict[str, Any] | None = None):
 
         defaults = defaults or {}
         self._defaults = {**defaults}
@@ -478,7 +478,7 @@ Mapping.register(_ObjIndex)
 class _UniqueObjIndex(_ObjIndex):
     def __init__(self, attr, accept_none=False):
         super().__init__(attr)
-        self.obs_lookup = {}
+        self.obs_lookup: dict = {}
         self.is_unique = True
         self.accept_none = accept_none
         self.none_values = []
@@ -743,7 +743,7 @@ class _IndexAccessor:
         return getattr(self, attr)
 
 
-_ImportExportDataContainer = Union[str, Path, Iterable[str], TextIO]
+type _ImportExportDataContainer = str | Path | Iterable[str] | TextIO
 
 
 class ImportSourceType(Enum):
@@ -775,8 +775,8 @@ class _MultiIterator(Iterator):
             self,
             seqobj: _ImportExportDataContainer,
             encoding: str = "utf-8",
-            url_args: Optional[dict] = None,
-            misc_args: Optional[dict] = None,
+            url_args: dict | None = None,
+            misc_args: dict | None = None,
     ):
         def _decoder(seq: Iterable[bytes]) -> Iterable[str]:
             for line in seq:
@@ -927,11 +927,11 @@ class _MultiIterator(Iterator):
             self._closeobj.close()
 
 
-FixedWidthParseSpec = Union[
-    tuple[str, int],
-    tuple[str, int, Optional[int]],
-    tuple[str, int, Optional[int], Optional[Callable[[str], Any]]],
-]
+FixedWidthParseSpec = (
+    Tuple[str, int]
+    | Tuple[str, int, int | None]
+    | Tuple[str, int, int | None, Callable[[str], Any] | None]
+)
 
 
 class FixedWidthReader:
@@ -956,14 +956,14 @@ class FixedWidthReader:
 
     def __init__(
         self,
-        slice_spec: list[FixedWidthParseSpec],
-        src_file: Union[str, Iterable, TextIO],
+        slice_spec: list[Any],
+        src_file: str | Iterable[Any] | TextIO,
         encoding: str = "utf-8",
     ):
         def parse_spec(
-            spec: list[FixedWidthParseSpec],
+            spec: list[Any],
         ) -> list[tuple[str, slice, Callable[[str], Any]]]:
-            def normalize_parse_spec(ps: FixedWidthParseSpec) -> FixedWidthParseSpec:
+            def normalize_parse_spec(ps: Any) -> Any:
                 return (*ps, None, None)[:4]  # noqa
 
             # add a "rest of the line" spec to the parse spec to terminate
@@ -1092,7 +1092,7 @@ def _determine_suppressed_attrs(
 TableContent = TypeVar("TableContent")
 
 
-class Table(Generic[TableContent]):
+class Table[TableContent]:
     """
     Table is the main class in C{littletable}, for representing a collection of SimpleNamespaces or
     user-defined objects with publicly accessible attributes or properties.  Tables can be:
@@ -1157,12 +1157,12 @@ class Table(Generic[TableContent]):
 
     @staticmethod
     def convert_numeric(
-            s: Optional[str] = None,
+            s: str | None = None,
             empty: Any = '',
             non_numeric: Type = object,
             force_float: bool = False,
             _int_fn: Callable[[str], int] = int,
-    ) -> Union[Callable, Any]:
+    ) -> Callable | Any:
         """
         Convenience method for transforming columns of CSV data from str to float and/or int. By default,
         convert_numeric will convert int values to int, float values to float, and leave all other values as-is.
@@ -1223,7 +1223,7 @@ class Table(Generic[TableContent]):
     def parse_datetime(
             time_format: str,
             empty: Any = '',
-            on_error: Optional[Any] = None
+            on_error: Any | None = None
     ) -> Callable[[str], datetime.datetime]:
         """Convenience method to convert string data to a datetime.datetime instance,
            given a parse string (following strptime format).
@@ -1242,7 +1242,7 @@ class Table(Generic[TableContent]):
 
     @staticmethod
     def parse_date(
-            time_format: str, empty: Any = '', on_error: Optional[Any] = None
+            time_format: str, empty: Any = '', on_error: Any | None = None
     ) -> Callable[[str], datetime.date]:
         """Convenience method to convert string data to a datetime.date instance,
            given a parse string (following strptime format).
@@ -1250,7 +1250,7 @@ class Table(Generic[TableContent]):
            Can be used for transforming data loaded from CSV data sets.
         """
 
-        def _converter(s: Optional[str] = None) -> Any:
+        def _converter(s: str | None = None) -> Any:
             if not s:
                 return empty
             try:
@@ -1264,7 +1264,7 @@ class Table(Generic[TableContent]):
             time_format: str,
             reference_time: datetime.datetime = datetime.datetime.strptime("0:00:00", "%H:%M:%S"),
             empty: Any = '',
-            on_error: Optional[Any] = None
+            on_error: Any | None = None
     ) -> Callable[[str], datetime.timedelta]:
         """Convenience method to convert string data to a datetime.timedelta instance,
            given a parse string (following strptime format), and optionally a
@@ -1273,7 +1273,7 @@ class Table(Generic[TableContent]):
            Can be used for transforming data loaded from CSV data sets.
         """
 
-        def _converter(s: Optional[str] = None) -> Any:
+        def _converter(s: str | None = None) -> Any:
             if s == '':
                 return empty
             try:
@@ -1295,8 +1295,8 @@ class Table(Generic[TableContent]):
         self._uniqueIndexes: list[_UniqueObjIndex] = []
         self._search_indexes: dict[str, dict[str, list]] = {}
 
-        self.import_source_type: Optional[ImportSourceType] = None
-        self.import_source: Optional[str] = None
+        self.import_source_type: ImportSourceType | None = None
+        self.import_source: str | None = None
 
         self.import_time = None
         self.create_time = datetime.datetime.now().astimezone(datetime.timezone.utc)
@@ -1399,7 +1399,7 @@ class Table(Generic[TableContent]):
         else:
             return self.obs[i]
 
-    def __delitem__(self, i: Union[int, slice]) -> None:
+    def __delitem__(self, i: int | slice) -> None:
         if isinstance(i, int):
             delidxs = [i]
         elif isinstance(i, slice):
@@ -1427,22 +1427,22 @@ class Table(Generic[TableContent]):
     def __reversed__(self) -> Iterable[TableContent]:
         return reversed(self.obs)
 
-    def __contains__(self, item: Union[TableContent, dict]) -> bool:
+    def __contains__(self, item: TableContent | dict) -> bool:
         if isinstance(item, Mapping):
             item = self._wrap_dict(item)
         return item in self.obs
 
-    def index(self, item: Union[TableContent, dict]) -> int:
+    def index(self, item: TableContent | dict) -> int:
         if isinstance(item, dict):
             item = self._wrap_dict(item)
         return self.obs.index(item)
 
-    def count(self, item: Union[TableContent, dict]) -> int:
+    def count(self, item: TableContent | dict) -> int:
         if isinstance(item, dict):
             item = self._wrap_dict(item)
         return self.obs.count(item)
 
-    def __add__(self, other: Union[Table, _JoinTerm, Iterable]) -> Union[_JoinTerm, Table]:
+    def __add__(self, other: Table | _JoinTerm | Iterable) -> _JoinTerm | Table:
         """Support UNION of 2 tables using "+" operator."""
         if isinstance(other, _JoinTerm):
             # special case if added to a JoinTerm, do join, not union
@@ -1454,14 +1454,14 @@ class Table(Generic[TableContent]):
             # assume other is a sequence of some sort, insert all elements
             return self.clone().insert_many(other)
 
-    def __iadd__(self, other: Table) -> Table:
+    def __iadd__(self, other: Table) -> Self:
         """Support UNION of 2 tables using "+=" operator."""
         return self.insert_many(other)
 
     def union(self, other: Table) -> Table:
         return self.clone().insert_many(other.obs)
 
-    def __call__(self, table_name: Optional[str] = None) -> Table[TableContent]:
+    def __call__(self, table_name: str | None = None) -> Self:
         """
         A simple way to assign a name to a table, such as those
         dynamically created by joins and queries.
@@ -1492,7 +1492,7 @@ class Table(Generic[TableContent]):
         """
         return namedtuple(classname, self._attr_names())
 
-    def copy_template(self, name: Optional[str] = None) -> Table[TableContent]:
+    def copy_template(self, name: str | None = None) -> Table[TableContent]:
         """
         Create empty copy of the current table, with copies of all
         index definitions.
@@ -1504,7 +1504,7 @@ class Table(Generic[TableContent]):
         ret(name)
         return ret
 
-    def clone(self, name: Optional[str] = None) -> Table[TableContent]:
+    def clone(self, name: str | None = None) -> Table[TableContent]:
         """
         Create full copy of the current table, including table contents
         and index definitions.
@@ -1514,7 +1514,7 @@ class Table(Generic[TableContent]):
 
     def create_index(
         self, attr: str, unique: bool = False, accept_none: bool = False, force: bool = False
-    ) -> Table[TableContent]:
+    ) -> Self:
         """
         Create a new index on a given attribute.
 
@@ -1575,7 +1575,7 @@ class Table(Generic[TableContent]):
             self.drop_index(attr)
             raise
 
-    def drop_index(self, attr: str) -> Table[TableContent]:
+    def drop_index(self, attr: str) -> Self:
         """
         Deletes an index from the Table.  Can be used to drop and rebuild an index,
         or to convert a non-unique index to a unique index, or vice versa.
@@ -1702,10 +1702,10 @@ class Table(Generic[TableContent]):
         self,
         attrname: str,
         *,
-        using: Optional[str | Iterable[str]] = None,
-        stopwords: Optional[Iterable[str]] = None,
+        using: str | Iterable[str] | None = None,
+        stopwords: Iterable[str] | None = None,
         force: bool = False,
-    ) -> Table[TableContent]:
+    ) -> Self:
         """
         Create a text search index for the given attribute.
         Regular indexes can perform range or equality checks against the
@@ -1916,14 +1916,14 @@ class Table(Generic[TableContent]):
 
         return ret
 
-    def delete_search_index(self, attrname: str) -> Table[TableContent]:
+    def delete_search_index(self, attrname: str) -> Self:
         """
         Deletes a previously-created search index on a particular attribute.
         """
         self._search_indexes.pop(attrname, None)
         return self
 
-    def rebuild_search_index(self, attrname: str, force: bool = True) -> Table[TableContent]:
+    def rebuild_search_index(self, attrname: str, force: bool = True) -> Self:
         """
         Rebuilds an existing search index if it has been invalidated, or if force=True.
         """
@@ -1941,7 +1941,7 @@ class Table(Generic[TableContent]):
 
         return self
 
-    def insert(self, obj: TableContent) -> Table[TableContent]:
+    def insert(self, obj: TableContent) -> Self:
         """
         Insert a new object into this Table.
         @param obj: any Python object -
@@ -1962,7 +1962,7 @@ class Table(Generic[TableContent]):
         """
         return self.insert_many([obj])
 
-    def insert_many(self, it: Iterable[TableContent]) -> Table[TableContent]:
+    def insert_many(self, it: Iterable[TableContent]) -> Self:
         """Inserts a collection of objects into the table."""
         unique_indexes = self._uniqueIndexes
         NO_SUCH_ATTR = object()
@@ -2020,13 +2020,13 @@ class Table(Generic[TableContent]):
         self._contents_changed()
         return self
 
-    def remove(self, ob: Any) -> Table[TableContent]:
+    def remove(self, ob: Any) -> Self:
         """
         Removes an object from the table. If object is not in the table, then
         no action is taken and no exception is raised."""
         return self.remove_many([ob])
 
-    def remove_many(self, it: Iterable) -> Table[TableContent]:
+    def remove_many(self, it: Iterable) -> Self:
         """Removes a collection of objects from the table."""
 
         # if table is empty, there is nothing to remove
@@ -2064,7 +2064,7 @@ class Table(Generic[TableContent]):
 
         return self
 
-    def clear(self) -> Table[TableContent]:
+    def clear(self) -> Self:
         """
         Remove all contents from a Table and all indexes, but leave index definitions intact.
         """
@@ -2097,7 +2097,7 @@ class Table(Generic[TableContent]):
         else:
             return sys.maxsize
 
-    def where(self, wherefn: Optional[PredicateFunction] = None, **kwargs: Any) -> Table[TableContent]:
+    def where(self, wherefn: PredicateFunction | None = None, **kwargs: Any) -> Table[TableContent]:
         """
         Retrieves matching objects from the table, based on given
         named parameters.  If multiple named parameters are given, then
@@ -2181,7 +2181,7 @@ class Table(Generic[TableContent]):
         self.remove_many(affected)
         return len(affected)
 
-    def shuffle(self) -> Table[TableContent]:
+    def shuffle(self) -> Self:
         """
         In-place random shuffle of the records in the table.
         """
@@ -2191,9 +2191,9 @@ class Table(Generic[TableContent]):
 
     def orderby(
         self,
-        key: Union[str, Iterable[str], Callable[[Any], Any]],
+        key: str | Iterable[str] | Callable[[Any], Any],
         reverse: bool = False,
-    ) -> Table[TableContent]:
+    ) -> Self:
         """
         Sort Table in place, using given fields as sort key.
         @param key: if this is a string, it is a comma-separated list of field names,
@@ -2245,7 +2245,7 @@ class Table(Generic[TableContent]):
     # backward-compatibility name
     sort = orderby
 
-    def rank(self, rank_col_name: str = "rank", start=1) -> Table:
+    def rank(self, rank_col_name: str = "rank", start=1) -> Self:
         """
         Add ranking column to each row in the table.
 
@@ -2258,7 +2258,7 @@ class Table(Generic[TableContent]):
 
     def select(
             self,
-            fields: Optional[Union[Iterable[str], str]] = None,
+            fields: Iterable[str] | str | None = None,
             **exprs: Callable[[TableContent], Any]
     ) -> Table:
         """
@@ -2353,7 +2353,7 @@ class Table(Generic[TableContent]):
     def join(
         self,
         other,
-        attrlist: Optional[Union[str, Iterable[str]]] = None,
+        attrlist: str | Iterable[str] | None = None,
         auto_create_indexes: bool = True,
         **kwargs: Any,
     ) -> Table:
@@ -2510,7 +2510,7 @@ class Table(Generic[TableContent]):
         self,
         join_type,
         other: Table,
-        attrlist: Optional[Union[Iterable[str], str]] = None,
+        attrlist: Iterable[str] | str | None = None,
         auto_create_indexes: bool = True,
         **kwargs: Any,
     ):
@@ -2721,7 +2721,7 @@ class Table(Generic[TableContent]):
             raise ValueError("can only join on indexed attributes")
         return _JoinTerm(self, attr, join)
 
-    def pivot(self, attrlist: Union[Iterable[str], str]) -> _PivotTable:
+    def pivot(self, attrlist: Iterable[str] | str) -> _PivotTable:
         """
         Pivots the data using the given attributes, returning a L{PivotTable}.
         @param attrlist: list of attributes to be used to construct the pivot table
@@ -2745,13 +2745,13 @@ class Table(Generic[TableContent]):
         self,
         source: _ImportExportDataContainer,
         encoding: str = "utf-8",
-        transforms: Optional[dict] = None,
-        filters: Optional[dict] = None,
+        transforms: dict | None = None,
+        filters: dict | None = None,
         reader=csv.DictReader,
-        row_class: Optional[type] = None,
-        limit: Optional[int] = None,
-        url_args: Optional[dict] = None,
-        misc_args: Optional[dict] = None,
+        row_class: type | None = None,
+        limit: int | None = None,
+        url_args: dict | None = None,
+        misc_args: dict | None = None,
     ) -> Table:
 
         if row_class is None:
@@ -2873,11 +2873,11 @@ class Table(Generic[TableContent]):
         self,
         csv_source: _ImportExportDataContainer,
         encoding: str = "utf-8",
-        transforms: Optional[dict] = None,
-        filters: Optional[dict] = None,
-        row_class: Optional[type] = None,
-        limit: Optional[int] = None,
-        fieldnames: Optional[Union[Iterable[str], str]] = None,
+        transforms: dict | None = None,
+        filters: dict | None = None,
+        row_class: type | None = None,
+        limit: int | None = None,
+        fieldnames: Iterable[str] | str | None = None,
         **kwargs: Any,
     ) -> Table:
         """
@@ -2943,10 +2943,10 @@ class Table(Generic[TableContent]):
         self,
         xsv_source: _ImportExportDataContainer,
         encoding: str = "utf-8",
-        transforms: Optional[dict] = None,
-        filters: Optional[dict] = None,
-        row_class: Optional[type] = None,
-        limit: Optional[int] = None,
+        transforms: dict | None = None,
+        filters: dict | None = None,
+        row_class: type | None = None,
+        limit: int | None = None,
         **kwargs: Any,
     ) -> Table:
         non_reader_args = (
@@ -2977,11 +2977,11 @@ class Table(Generic[TableContent]):
         self,
         xsv_source: _ImportExportDataContainer,
         encoding: str = "utf-8",
-        transforms: Optional[dict] = None,
-        filters: Optional[dict] = None,
-        row_class: Optional[type] = None,
-        limit: Optional[int] = None,
-        fieldnames: Optional[Union[Iterable[str], str]] = None,
+        transforms: dict | None = None,
+        filters: dict | None = None,
+        row_class: type | None = None,
+        limit: int | None = None,
+        fieldnames: Iterable[str] | str | None = None,
         **kwargs,
     ) -> Table:
         """
@@ -3019,10 +3019,10 @@ class Table(Generic[TableContent]):
     def _excel_import(
         self,
         excel_source: _ImportExportDataContainer,
-        transforms: Optional[dict] = None,
-        filters: Optional[dict] = None,
-        row_class: Optional[type] = None,
-        limit: Optional[int] = None,
+        transforms: dict | None = None,
+        filters: dict | None = None,
+        row_class: type | None = None,
+        limit: int | None = None,
         **kwargs: Any,
     ) -> Table:
         try:
@@ -3064,11 +3064,11 @@ class Table(Generic[TableContent]):
     def excel_import(
         self,
         excel_source: _ImportExportDataContainer,
-        transforms: Optional[dict] = None,
-        filters: Optional[dict] = None,
-        row_class: Optional[type] = None,
-        limit: Optional[int] = None,
-        fieldnames: Optional[Union[Iterable[str], str]] = None,
+        transforms: dict | None = None,
+        filters: dict | None = None,
+        row_class: type | None = None,
+        limit: int | None = None,
+        fieldnames: Iterable[str] | str | None = None,
         **kwargs: Any,
     ) -> Table:
         """
@@ -3116,12 +3116,12 @@ class Table(Generic[TableContent]):
 
     def csv_export(
         self,
-        csv_dest: Optional[_ImportExportDataContainer] = None,
-        fieldnames: Optional[Iterable[str]] = None,
+        csv_dest: _ImportExportDataContainer | None = None,
+        fieldnames: Iterable[str] | None = None,
         encoding: str = "utf-8",
         delimiter: str = ",",
         **kwargs: Any,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Exports the contents of the table to a CSV-formatted file.
         @param csv_dest: CSV file - if a string is given, the file with that name will be
@@ -3189,11 +3189,11 @@ class Table(Generic[TableContent]):
 
     def tsv_export(
         self,
-        tsv_dest: Optional[_ImportExportDataContainer],
-        fieldnames: Optional[Iterable[str]] = None,
+        tsv_dest: _ImportExportDataContainer | None,
+        fieldnames: Iterable[str] | None = None,
         encoding: str = "UTF-8",
         **kwargs: Any,
-    ) -> Optional[str]:
+    ) -> str | None:
         r"""
         Similar to csv_export, with delimiter="\t"
         """
@@ -3205,12 +3205,12 @@ class Table(Generic[TableContent]):
         self,
         source: _ImportExportDataContainer,
         encoding: str = "UTF-8",
-        transforms: Optional[dict] = None,
-        row_class: Optional[type] = None,
+        transforms: dict | None = None,
+        row_class: type | None = None,
         streaming: bool = False,
         path: str = "",
-        json_decoder: Optional[json.JSONDecoder] = None,
-        limit: Optional[int] = None,
+        json_decoder: json.JSONDecoder | None = None,
+        limit: int | None = None,
         **kwargs: Any,
     ) -> Table:
         """
@@ -3313,12 +3313,12 @@ class Table(Generic[TableContent]):
 
     def json_export(
         self,
-        dest: Optional[_ImportExportDataContainer] = None,
-        fieldnames: Optional[Union[Iterable[str], str]] = None,
+        dest: _ImportExportDataContainer | None = None,
+        fieldnames: Iterable[str] | str | None = None,
         encoding: str = "UTF-8",
         streaming: bool = False,
-        json_encoder: Optional[Union[type[json.JSONEncoder], tuple[type[json.JSONEncoder], ...]]] = None,
-    ) -> Optional[str]:
+        json_encoder: type[json.JSONEncoder] | tuple[type[json.JSONEncoder], ...] | None = None,
+    ) -> str | None:
         """
         Exports the contents of the table to a JSON-formatted file.
         @param dest: output file - if a string is given, the file with that name will be
@@ -3415,7 +3415,7 @@ class Table(Generic[TableContent]):
     def excel_export(
         self,
         excel_dest: _ImportExportDataContainer,
-        fieldnames: Optional[Iterable[str]] = None,
+        fieldnames: Iterable[str] | None = None,
         **kwargs: Any,
     ):
         """
@@ -3458,7 +3458,7 @@ class Table(Generic[TableContent]):
             ws.append([v for v in _to_dict(o).values()])
         wb.save(excel_dest)
 
-    def as_dataframe(self, fields: Optional[Union[Iterable[str], str]] = None):
+    def as_dataframe(self, fields: Iterable[str] | str | None = None):
         """
         Export contents of the Table to a pandas DataFrame.
         @param fields: list of strings, or single space-delimited string, listing
@@ -3492,8 +3492,8 @@ class Table(Generic[TableContent]):
         return ret
 
     def compute_field(
-        self, attrname: str, fn: Union[Callable[[Any], Any], str], default: Optional[Any] = None
-    ) -> Table:
+        self, attrname: str, fn: Callable[[Any], Any] | str, default: Any | None = None
+    ) -> Self:
         """
         Computes a new attribute for each object in table, or replaces an
         existing attribute in each record with a computed value
@@ -3581,7 +3581,7 @@ class Table(Generic[TableContent]):
 
     def groupby(
             self,
-            keyexpr: Union[str, Iterable[str], Callable[[TableContent], Any]],
+            keyexpr: str | Iterable[str] | Callable[[TableContent], Any],
             sort: bool = False
     ) -> Iterable[Tuple[Any, Table[TableContent]]]:
         """
@@ -3629,9 +3629,9 @@ class Table(Generic[TableContent]):
 
     def splitby(
             self,
-            pred: Union[str, PredicateFunction] = None,
+            pred: str | PredicateFunction = None,
             *,
-            errors: Union[bool, str, dict[type[Exception], Union[bool, str]]] = "discard",
+            errors: bool | str | dict[type[Exception], bool | str] = "discard",
             **kwargs,
     ) -> tuple[Table[TableContent], ...]:
         """
@@ -3770,7 +3770,7 @@ class Table(Generic[TableContent]):
 
         return ret
 
-    def unique(self, key: Optional[Union[Callable[[TableContent], Any], str]] = None) -> Table[TableContent]:
+    def unique(self, key: Callable[[TableContent], Any] | str | None = None) -> Table[TableContent]:
         """
         Create a new table of objects,containing no duplicate values.
 
@@ -3829,7 +3829,7 @@ class Table(Generic[TableContent]):
         """
         return self[-n:](self.table_name)
 
-    def stats(self, field_names: Optional[Union[str, Iterable[str]]] = None, by_field: bool = True) -> Table:
+    def stats(self, field_names: str | Iterable[str] | None = None, by_field: bool = True) -> Table:
         """
         Return a summary Table of statistics for numeric data in a Table.
         For each field in the source table, returns:
@@ -3914,7 +3914,7 @@ class Table(Generic[TableContent]):
                             for stat_name, stat_fn in stat_fn_map)
         return ret
 
-    def _parse_fields_string(self, field_names: Union[str, Iterable[str]]) -> list[str]:
+    def _parse_fields_string(self, field_names: str | Iterable[str]) -> list[str]:
         """
         Convert raw string or list of names to actual column names:
         - names starting with '-' indicate to suppress that field
@@ -3951,9 +3951,9 @@ class Table(Generic[TableContent]):
 
     def _rich_table(
             self,
-            fields: Optional[Iterable[Union[str, tuple[str, dict]]]] = None,
+            fields: Iterable[str | tuple[str, dict]] | None = None,
             empty: Any = "",
-            groupby: Optional[str] = None,
+            groupby: str | None = None,
             **kwargs
     ):
         from rich.table import Table as RichTable
@@ -4037,10 +4037,10 @@ class Table(Generic[TableContent]):
 
     def present(
             self,
-            fields: Optional[Iterable[str | tuple[str, dict]]] = None,
-            file: Optional[TextIO] = None,
-            groupby: Optional[str] = None,
-            width: Optional[int] = None,
+            fields: Iterable[str | tuple[str, dict]] | None = None,
+            file: TextIO | None = None,
+            groupby: str | None = None,
+            width: int | None = None,
             **kwargs: Any
     ) -> None:
         """
@@ -4070,10 +4070,10 @@ class Table(Generic[TableContent]):
 
     def as_html(
             self,
-            fields: Union[str, Iterable[str]] = "*",
-            formats: Optional[dict[str, str]] = None,
-            groupby: Optional[Union[str, Iterable[str]]] = None,
-            table_properties: Optional[dict] = None,
+            fields: str | Iterable[str] = "*",
+            formats: dict[str, str] | None = None,
+            groupby: str | Iterable[str] | None = None,
+            table_properties: dict | None = None,
     ) -> str:
         """
         Output the table as a rudimentary HTML table.
@@ -4158,9 +4158,9 @@ class Table(Generic[TableContent]):
 
     def as_markdown(
             self,
-            fields: Union[str, Iterable[str]] = "*",
-            formats: Optional[dict[str, str]] = None,
-            groupby: Optional[Union[str, Iterable[str]]] = None,
+            fields: str | Iterable[str] = "*",
+            formats: dict[str, str] | None = None,
+            groupby: str | Iterable[str] | None = None,
     ) -> str:
         """
         Output the table as a Markdown table.
@@ -4297,7 +4297,7 @@ class _PivotTable(Table):
 
     def __init__(
             self,
-            parent: Union[Table, _PivotTable],
+            parent: Table | _PivotTable,
             attr_val_path: list[tuple[str, str]],
             attrlist: Iterable[str],
     ):
@@ -4455,9 +4455,9 @@ class _PivotTable(Table):
 
     def as_table(
             self,
-            fn: Optional[Callable] = None,
-            col: Optional[str] = None,
-            col_label: Optional[str] = None
+            fn: Callable | None = None,
+            col: str | None = None,
+            col_label: str | None = None,
     ) -> Table:
         """Dump out the summary counts of this pivot table as a Table."""
         if col_label is None:
@@ -4510,7 +4510,7 @@ class _PivotTable(Table):
     def summarize(
             self,
             count_fn: Callable[[Iterable], int] = len,
-            col_label: Optional[str] = None
+            col_label: str | None = None,
     ) -> _PivotTableSummary:
         if col_label is None:
             if len(self._pivot_attrs) == 1:
@@ -4526,7 +4526,7 @@ class _PivotTableSummary:
             pivot_table: _PivotTable,
             pivot_attrs: list[str],
             count_fn: Callable[[Iterable], int] = len,
-            col_label: Optional[str] = None
+            col_label: str | None = None,
     ):
         self._pt = pivot_table
         self._pivot_attrs = pivot_attrs
@@ -4635,7 +4635,7 @@ class _JoinTerm:
         self.join_to = None
         self.join_type = join_type
 
-    def __add__(self, other: Union[Table, _JoinTerm]) -> _JoinTerm:
+    def __add__(self, other: Table | _JoinTerm) -> _JoinTerm:
         if isinstance(other, Table):
             other = other.join_on(self.join_field)
         if isinstance(other, _JoinTerm):
@@ -4667,7 +4667,7 @@ class _JoinTerm:
             f"cannot add object of type {type(other).__name__!r} to JoinTerm"
         )
 
-    def __call__(self, attrs: Optional[Iterable[str]] = None) -> Table:
+    def __call__(self, attrs: Iterable[str] | None = None) -> Table:
         if self.join_to:
             other = self.join_to
             if isinstance(other, Table):
