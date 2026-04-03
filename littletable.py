@@ -155,14 +155,14 @@ from typing import (
 from rich import box
 
 version_info = namedtuple("version_info", "major minor micro release_level serial")
-__version_info__ = version_info(3, 0, 3, "final", 0)
+__version_info__ = version_info(3, 1, 0, "final", 0)
 __version__ = (
     "{}.{}.{}".format(*__version_info__[:3])
     + (f"{__version_info__.release_level[0]}{__version_info__.serial}", "")[
         __version_info__.release_level == "final"
     ]
 )
-__version_time__ = "19 May 2025 06:43 UTC"
+__version_time__ = "03 Apr 2026 05:19 UTC"
 __author__ = "Paul McGuire <ptmcg@austin.rr.com>"
 
 
