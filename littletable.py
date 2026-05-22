@@ -1073,9 +1073,6 @@ def _determine_suppressed_attrs(
     return {a for a, _, _ in itertools.takewhile(_compare, zip(group_attrs, prev, curr))}
 
 
-TableContent = TypeVar("TableContent")
-
-
 class Table[TableContent]:
     """
     Table is the main class in C{littletable}, for representing a collection of SimpleNamespaces or
@@ -4259,7 +4256,7 @@ Sequence.register(Table)
 
 
 # module-level convenience functions for Table.*_import() instance methods
-def _make_module_level_import_fn(name: str) -> Callable[[Any, ...], Table[TableContent]]:
+def _make_module_level_import_fn[TableContent](name: str) -> Callable[[Any, ...], Table[TableContent]]:
     table_method = getattr(Table, name)
 
     @functools.wraps(table_method)
