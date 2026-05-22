@@ -3610,11 +3610,11 @@ class Table[TableContent]:
             offset += batch_size
 
     def splitby(
-            self,
-            pred: str | PredicateFunction = None,
-            *,
-            errors: bool | str | dict[type[Exception], bool | str] = "discard",
-            **kwargs,
+        self,
+        pred: str | PredicateFunction = None,
+        *,
+        errors: bool | str | dict[type[Exception], bool | str] = "discard",
+        **kwargs,
     ) -> tuple[Table[TableContent], ...]:
         """
         Takes a predicate function (takes a table record and returns True or False)
@@ -3669,12 +3669,11 @@ class Table[TableContent]:
             else:
                 key, value = next(iter(kwargs.items()))
                 pred = lambda split_rec: getattr(split_rec, key, None) == value
-        else:
-            if kwargs:
-                raise ValueError(
-                    "must provide either a predicate function or one or more named"
-                    " arguments, not both"
-                )
+        elif kwargs:
+            raise ValueError(
+                "must provide either a predicate function or one or more named"
+                " arguments, not both"
+            )
 
         # if key is a str, convert it to a predicate function using getattr
         if isinstance(pred, str):
@@ -3702,8 +3701,8 @@ class Table[TableContent]:
                 )
 
             if not all(
-                    error_response in {True, False, "return", "discard", "raise"}
-                    for error_response in errors.values()
+                error_response in {True, False, "return", "discard", "raise"}
+                for error_response in errors.values()
             ):
                 raise ValueError(
                     f"one or more error values is invalid {errors!r};"
@@ -3723,10 +3722,10 @@ class Table[TableContent]:
                 " or a dict mapping Exception types to one of those values")
 
         # wrap pred in try-except, to infer any failure of pred -> False,
-        # and use not not to bool-ify the value returned from pred()
+        # and use bool to bool-ify the value returned from pred()
         def wrapped_pred(obj):
             try:
-                return not not pred(obj)
+                return bool(pred(obj))
             except Exception as exc:
                 for exctype, retval in error_responses.items():
                     if isinstance(exc, exctype):
@@ -3738,8 +3737,8 @@ class Table[TableContent]:
         # construct return tables to receive False and True evaluated records
         ret = self.copy_template(), self.copy_template()
         if any(
-                error_response is RETURN_ERRORS_TABLE
-                for error_response in error_responses.values()
+            error_response is RETURN_ERRORS_TABLE
+            for error_response in error_responses.values()
         ):
             ret += (self.copy_template(),)
 
