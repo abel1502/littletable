@@ -4451,38 +4451,24 @@ class _PivotTable(Table):
 
         for attr in self._pivot_attrs:
             ret.create_index(attr)
-        if len(self._pivot_attrs) == 1:
-            for sub in self.subtables:
-                subattr, subval = sub._attr_path[-1]
-                attrdict = {subattr: subval}
-                if col is None or fn is len:
-                    attrdict[col_label] = fn(sub)
-                else:
-                    attrdict[col_label] = fn([getattr(s, col, None) for s in sub])
-                ret.insert(default_row_class(**attrdict))
-        elif len(self._pivot_attrs) == 2:
-            for sub in self.subtables:
-                for ssub in sub.subtables:
-                    attrdict = dict(ssub._attr_path)
-                    if col is None or fn is len:
-                        attrdict[col_label] = fn(ssub)
-                    else:
-                        attrdict[col_label] = fn([getattr(s, col, None) for s in ssub])
-                    ret.insert(default_row_class(**attrdict))
-        elif len(self._pivot_attrs) == 3:
-            for sub in self.subtables:
-                for ssub in sub.subtables:
-                    for sssub in ssub.subtables:
-                        attrdict = dict(sssub._attr_path)
-                        if col is None or fn is len:
-                            attrdict[col_label] = fn(sssub)
-                        else:
-                            attrdict[col_label] = fn(
-                                [getattr(s, col, None) for s in sssub]
-                            )
-                        ret.insert(default_row_class(**attrdict))
-        else:
+        
+        if len(self._pivot_attrs) > 3:
             raise ValueError("can only dump summary counts for 1 or 2-attribute pivots")
+        
+        def walk(root: _PivotTable, depth: int) -> Iterable[_PivotTable]:
+            items = [root]
+            for _ in range(depth):
+                items = itertools.chain.from_iterable(s.subtables for s in items)
+            return items
+        
+        for sub in walk(self, len(self._pivot_attrs)):
+            attrdict = dict(sub._attr_path)
+            if col is None or fn is len:
+                attrdict[col_label] = fn(sub)
+            else:
+                attrdict[col_label] = fn([getattr(s, col, None) for s in sub])
+            ret.insert(default_row_class(**attrdict))
+        
         return ret
 
     summary_counts = as_table
