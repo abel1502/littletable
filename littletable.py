@@ -944,32 +944,30 @@ class FixedWidthReader:
         src_file: str | Iterable[Any] | TextIO,
         encoding: str = "utf-8",
     ):
-        def parse_spec(
-            spec: list[Any],
-        ) -> list[tuple[str, slice, Callable[[str], Any]]]:
-            def normalize_parse_spec(ps: Any) -> Any:
-                return (*ps, None, None)[:4]  # noqa
-
-            # add a "rest of the line" spec to the parse spec to terminate
-            # the last column
-            rest_of_line_spec = ("", None)
-            spec.append(rest_of_line_spec)
-
-            ret: list[tuple[str, slice, Callable[[str], Any]]] = []
-            for cur, next_ in zip(spec, spec[1:]):
-                label, col, end_col, fn = normalize_parse_spec(cur)
-                if label is None:
-                    continue
-                if end_col is None:
-                    end_col = next_[1]
-                if fn is None:
-                    fn = str.strip
-                ret.append((label.lower(), slice(col, end_col), fn))
-            return ret
-
-        self._slices = parse_spec(slice_spec)
+        self._slices = self._parse_spec(slice_spec)
         self._src_file = src_file
         self._encoding = encoding
+    
+    @staticmethod
+    def _parse_spec(
+        spec: list[Any],
+    ) -> list[tuple[str, slice, Callable[[str], Any]]]:
+        # add a "rest of the line" spec to the parse spec to terminate
+        # the last column
+        rest_of_line_spec = ("", None)
+        spec.append(rest_of_line_spec)
+
+        ret: list[tuple[str, slice, Callable[[str], Any]]] = []
+        for cur, next_ in zip(spec, spec[1:]):
+            label, col, end_col, fn = (*cur, None, None)[:4]  # noqa
+            if label is None:
+                continue
+            if end_col is None:
+                end_col = next_[1]
+            if fn is None:
+                fn = str.strip
+            ret.append((label.lower(), slice(col, end_col), fn))
+        return ret
 
     def __iter__(self) -> Iterable[dict[str, Any]]:
         with contextlib.closing(_MultiIterator(self._src_file, self._encoding)) as _srciter:
