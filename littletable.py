@@ -1978,26 +1978,23 @@ class Table[TableContent]:
     def insert_many(self, new_objs: Iterable[TableContent]) -> Self:
         """Inserts a collection of objects into the table."""
         
-        if self._indexes:
-            for obj in new_objs:
-                if isinstance(obj, dict):
-                    obj = self._wrap_dict(obj)
-                
-                try:
-                    for ind in self._indexes.values():
-                        ind.add(obj)
-                except:
-                    # Improvised rollback
-                    failing_ind = ind
-                    for ind in self._indexes.values():
-                        if ind is failing_ind:
-                            break
-                        ind.remove(obj)
-                    raise
-                
-                self.obs.append(obj)
-        else:
-            self.obs.extend(new_objs)
+        for obj in new_objs:
+            if isinstance(obj, dict):
+                obj = self._wrap_dict(obj)
+            
+            try:
+                for ind in self._indexes.values():
+                    ind.add(obj)
+            except:
+                # Improvised rollback
+                failing_ind = ind
+                for ind in self._indexes.values():
+                    if ind is failing_ind:
+                        break
+                    ind.remove(obj)
+                raise
+            
+            self.obs.append(obj)
 
         self._contents_changed()
         return self
