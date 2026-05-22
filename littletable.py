@@ -1431,12 +1431,11 @@ class Table[TableContent]:
         if isinstance(other, _JoinTerm):
             # special case if added to a JoinTerm, do join, not union
             return other + self
-        elif isinstance(other, Table):
+        if isinstance(other, Table):
             # if other is another Table, just union them
             return self.union(other)
-        else:
-            # assume other is a sequence of some sort, insert all elements
-            return self.clone().insert_many(other)
+        # assume other is a sequence of some sort, insert all elements
+        return self.clone().insert_many(other)
 
     def __iadd__(self, other: Table) -> Self:
         """Support UNION of 2 tables using "+=" operator."""
