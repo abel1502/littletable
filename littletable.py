@@ -1136,11 +1136,11 @@ class Table[TableContent]:
 
     @staticmethod
     def convert_numeric(
-            s: str | None = None,
-            empty: Any = '',
-            non_numeric: Type = object,
-            force_float: bool = False,
-            _int_fn: Callable[[str], int] = int,
+        s: str | None = None,
+        empty: Any = '',
+        non_numeric: Type = object,
+        force_float: bool = False,
+        _int_fn: Callable[[str], int] = int,
     ) -> Callable | Any:
         """
         Convenience method for transforming columns of CSV data from str to float and/or int. By default,
@@ -1184,8 +1184,8 @@ class Table[TableContent]:
                                non_numeric=non_numeric,
                                force_float=force_float,
                                _int_fn=(int, float)[force_float])
-            else:
-                return Table.convert_numeric
+            
+            return Table.convert_numeric
 
         if s == '':
             return empty
@@ -1193,10 +1193,12 @@ class Table[TableContent]:
         try:
             return _int_fn(s)
         except ValueError:
-            try:
-                return float(s)
-            except ValueError:
-                return s if non_numeric is object else non_numeric
+            pass
+        
+        try:
+            return float(s)
+        except ValueError:
+            return s if non_numeric is object else non_numeric
 
     @staticmethod
     def parse_datetime(
