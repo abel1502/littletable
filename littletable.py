@@ -3562,9 +3562,9 @@ class Table[TableContent]:
         return tbl
 
     def groupby(
-            self,
-            keyexpr: str | Iterable[str] | Callable[[TableContent], Any],
-            sort: bool = False
+        self,
+        keyexpr: str | Iterable[str] | Callable[[TableContent], Any],
+        sort: bool = False,
     ) -> Iterable[tuple[Any, Table[TableContent]]]:
         """
         Analogous to itertools.groupby, using the Table as the iterable to be
