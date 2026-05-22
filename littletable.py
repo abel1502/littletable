@@ -4617,11 +4617,11 @@ class _JoinTerm:
                     other.join_type = self.join_type
 
                 return self
-            else:
-                if other.join_to is None:
-                    return self() + other
-                else:
-                    return self() + other()
+            
+            if other.join_to is None:
+                return self() + other
+            
+            return self() + other()
         raise ValueError(
             f"cannot add object of type {type(other).__name__!r} to JoinTerm"
         )
