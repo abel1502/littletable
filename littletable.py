@@ -1202,14 +1202,15 @@ class Table[TableContent]:
 
     @staticmethod
     def parse_datetime(
-            time_format: str,
-            empty: Any = '',
-            on_error: Any | None = None
+        time_format: str,
+        empty: Any = '',
+        on_error: Any | None = None,
     ) -> Callable[[str], datetime.datetime]:
-        """Convenience method to convert string data to a datetime.datetime instance,
-           given a parse string (following strptime format).
+        """
+        Convenience method to convert string data to a datetime.datetime instance,
+        given a parse string (following strptime format).
 
-           Can be used for transforming data loaded from CSV data sets.
+        Can be used for transforming data loaded from CSV data sets.
         """
 
         def _converter(s: str = "") -> Any:
@@ -1223,12 +1224,13 @@ class Table[TableContent]:
 
     @staticmethod
     def parse_date(
-            time_format: str, empty: Any = '', on_error: Any | None = None
+        time_format: str, empty: Any = '', on_error: Any | None = None,
     ) -> Callable[[str], datetime.date]:
-        """Convenience method to convert string data to a datetime.date instance,
-           given a parse string (following strptime format).
+        """
+        Convenience method to convert string data to a datetime.date instance,
+        given a parse string (following strptime format).
 
-           Can be used for transforming data loaded from CSV data sets.
+        Can be used for transforming data loaded from CSV data sets.
         """
 
         def _converter(s: str | None = None) -> Any:
@@ -1242,16 +1244,17 @@ class Table[TableContent]:
 
     @staticmethod
     def parse_timedelta(
-            time_format: str,
-            reference_time: datetime.datetime = datetime.datetime.strptime("0:00:00", "%H:%M:%S"),
-            empty: Any = '',
-            on_error: Any | None = None
+        time_format: str,
+        reference_time: datetime.datetime = datetime.datetime.strptime("0:00:00", "%H:%M:%S"),
+        empty: Any = '',
+        on_error: Any | None = None,
     ) -> Callable[[str], datetime.timedelta]:
-        """Convenience method to convert string data to a datetime.timedelta instance,
-           given a parse string (following strptime format), and optionally a
-           reference datetime.datetime.
+        """
+        Convenience method to convert string data to a datetime.timedelta instance,
+        given a parse string (following strptime format), and optionally a
+        reference datetime.datetime.
 
-           Can be used for transforming data loaded from CSV data sets.
+        Can be used for transforming data loaded from CSV data sets.
         """
 
         def _converter(s: str | None = None) -> Any:
