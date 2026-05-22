@@ -1380,8 +1380,8 @@ class Table[TableContent]:
             ret = self.copy_template()
             ret.insert_many(self.obs[i])
             return ret
-        else:
-            return self.obs[i]
+        
+        return self.obs[i]
 
     def __delitem__(self, i: int | slice) -> None:
         if isinstance(i, int):
