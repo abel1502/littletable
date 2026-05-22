@@ -1065,8 +1065,8 @@ def _make_comparator2(
 
 
 def _determine_suppressed_attrs(
-        group_attrs: list[str], prev: tuple[Any, ...], curr: tuple[Any, ...],
-        _compare=lambda attr_prev_curr: attr_prev_curr[1] == attr_prev_curr[2]
+    group_attrs: list[str], prev: tuple[Any, ...], curr: tuple[Any, ...],
+    _compare=lambda attr_prev_curr: attr_prev_curr[1] == attr_prev_curr[2],
 ) -> set[str]:
     return {a for a, _, _ in itertools.takewhile(_compare, zip(group_attrs, prev, curr))}
 
