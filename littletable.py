@@ -2096,6 +2096,8 @@ class Table[TableContent]:
 
         @return: a new Table containing the matching objects
         """
+        ret = self
+        
         if kwargs:
             # order query criteria in ascending order of number of matching items
             # for each individual given attribute; this will minimize the number
@@ -2129,8 +2131,6 @@ class Table[TableContent]:
                 ret = newret
                 if not ret:
                     break
-        else:
-            ret = self
 
         if ret and wherefn is not None:
             newret = ret.copy_template()
