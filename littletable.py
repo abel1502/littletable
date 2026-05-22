@@ -755,16 +755,12 @@ class _MultiIterator(Iterator):
     """
 
     def __init__(
-            self,
-            seqobj: _ImportExportDataContainer,
-            encoding: str = "utf-8",
-            url_args: dict | None = None,
-            misc_args: dict | None = None,
+        self,
+        seqobj: _ImportExportDataContainer,
+        encoding: str = "utf-8",
+        url_args: dict | None = None,
+        misc_args: dict | None = None,
     ):
-        def _decoder(seq: Iterable[bytes]) -> Iterable[str]:
-            for line in seq:
-                yield line.decode(encoding)
-
         self.type = None
         if isinstance(seqobj, Path):
             seqobj = str(seqobj)
@@ -820,7 +816,7 @@ class _MultiIterator(Iterator):
                 # unexpected scheme - scheme is verified above to recognize only "https"
                 # or "http"
                 self._closeobj = urllib.request.urlopen(data_request, **urlopen_args)  # nosec: B310
-                self._iterobj = _decoder(self._closeobj)
+                self._iterobj = self._decoder(self._closeobj, encoding)
                 self.type = ImportSourceType.url
             else:
                 seqobj_path = Path(seqobj)
@@ -839,13 +835,13 @@ class _MultiIterator(Iterator):
                             raise ValueError(
                                 f"compressed tar archive contains multiple files, none matching {inner_name}"
                             )
-                    self._iterobj = _decoder(iterobj)
+                    self._iterobj = self._decoder(iterobj, encoding)
                     self.type = ImportSourceType.tar_gzip
                 elif seqobj_path.suffix == ".gz":
                     import gzip
 
                     self._closeobj = gzip.GzipFile(filename=seqobj)
-                    self._iterobj = _decoder(self._closeobj)
+                    self._iterobj = self._decoder(self._closeobj, encoding)
                     self.type = ImportSourceType.gzip
                 elif seqobj_path.suffix in (".xz", ".lzma"):
                     import lzma
@@ -882,7 +878,7 @@ class _MultiIterator(Iterator):
                                 f"zip archive contains multiple files, none matching {inner_name}"
                             )
 
-                    self._iterobj = _decoder(self._closeobj)
+                    self._iterobj = self._decoder(self._closeobj, encoding)
                     self.type = ImportSourceType.zip
 
                 elif seqobj_path.suffix in (".xlsx", ".xlsm", ".xlst"):
@@ -908,6 +904,11 @@ class _MultiIterator(Iterator):
             self._iterobj.close()
         if self._closeobj is not None:
             self._closeobj.close()
+    
+    @staticmethod
+    def _decoder(seq: Iterable[bytes], encoding: str) -> Iterable[str]:
+        for line in seq:
+            yield line.decode(encoding)
 
 
 FixedWidthParseSpec = (
