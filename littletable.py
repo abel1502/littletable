@@ -4255,7 +4255,7 @@ Sequence.register(Table)
 
 
 # module-level convenience functions for Table.*_import() instance methods
-def _make_module_level_import_fn[TableContent](name: str) -> Callable[[Any, ...], Table[TableContent]]:
+def _make_module_level_import_fn[TableContent](name: str) -> Callable[..., Table[TableContent]]:
     table_method = getattr(Table, name)
 
     @functools.wraps(table_method)
