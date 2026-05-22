@@ -476,58 +476,42 @@ Mapping.register(_ObjIndex)
 
 
 class _UniqueObjIndex(_ObjIndex):
-    def __init__(self, attr, accept_none=False):
+    def __init__(self, attr, accept_none=False, optional=False):
         super().__init__(attr)
         self.obs_lookup: dict = {}
         self.is_unique = True
         self.accept_none = accept_none
-        self.none_values = []
+        self.optional = optional
 
     def sort(self, key, reverse: bool = False):
         pass
 
     def __setitem__(self, k, v):
-        if k is not None:
-            if k not in self.obs_lookup:
-                self.obs_lookup[k] = v
-            else:
-                raise KeyError(f"duplicate key value {k!r}")
-        else:
-            if self.accept_none:
-                self.none_values.append(v)
-            else:
+        if k is None and not self.accept_none:
+            if not self.optional:
                 raise ValueError("None is not a valid index key")
+            return  # Missing values are not indexed, but 
+        
+        if k in self.obs_lookup:
+            raise KeyError(f"duplicate key value {k!r}")
+        
+        self.obs_lookup[k] = v
 
     def __getitem__(self, k):
-        if k is not None:
             return [self.obs_lookup.get(k)] if k in self.obs_lookup else []
-        else:
-            return list(self.none_values)
 
     def __contains__(self, k):
-        if k is not None:
             return k in self.obs_lookup
-        else:
-            return self.accept_none and self.none_values
 
     def keys(self):
-        return sorted(self.obs_lookup) + ([None, ] if self.none_values else [])
+        return sorted(self.obs_lookup)
 
     def items(self):
         return ((k, [v]) for k, v in self.obs_lookup.items())
 
     def remove(self, obj):
-        if (k := getattr(obj, self.attr)) is not None:
+        k = getattr(obj, self.attr)
             self.obs_lookup.pop(k, None)
-        else:
-            try:
-                self.none_values.remove(obj)
-            except ValueError:
-                pass
-
-    def _clear(self):
-        super()._clear()
-        del self.none_values[:]
 
 
 class _ObjIndexWrapper:
