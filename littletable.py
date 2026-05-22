@@ -421,6 +421,9 @@ def _to_json(obj, enc_cls: Type[json.JSONEncoder] | None, **kwargs: Any) -> str:
     return json.dumps(_to_dict(obj), cls=enc_cls, **kwargs)
 
 
+NO_SUCH_ATTR = object()
+
+
 class _ObjIndex:
     def __init__(self, attr: str):
         self.attr = attr
@@ -448,6 +451,10 @@ class _ObjIndex:
 
     def items(self) -> Iterable[tuple[Any, Any]]:
         return self.obs_lookup.items()
+    
+    def add(self, obj) -> None:
+        k = getattr(obj, self.attr, None)
+        self[k] = obj
 
     def remove(self, obj) -> None:
         try:
@@ -489,7 +496,7 @@ class _UniqueObjIndex(_ObjIndex):
     def __setitem__(self, k, v):
         if k is None and not self.accept_none:
             if not self.optional:
-                raise ValueError("None is not a valid index key")
+                raise ValueError(f"unique key cannot be None or blank for index {self.attr!r}", v)
             return  # Missing values are not indexed, but 
         
         if k in self.obs_lookup:
@@ -508,6 +515,22 @@ class _UniqueObjIndex(_ObjIndex):
 
     def items(self):
         return ((k, [v]) for k, v in self.obs_lookup.items())
+    
+    def add(self, obj):
+        k = getattr(obj, self.attr, NO_SUCH_ATTR)
+        
+        if k is None and not self.accept_none:
+            k = NO_SUCH_ATTR
+        
+        if k is NO_SUCH_ATTR:
+            if self.optional:
+                return
+            raise KeyError(f"Object {obj!r} missing attribute {self.attr!r} required for unique index")
+        
+        try:
+            self[k] = obj
+        except KeyError:
+            raise KeyError(f"duplicate unique key value {k!r} for index {self!r}", obj)
 
     def remove(self, obj):
         k = getattr(obj, self.attr)
@@ -1276,7 +1299,6 @@ class Table[TableContent]:
         self(table_name)
         self.obs: list[Any] = []
         self._indexes: dict[str, _ObjIndex] = {}
-        self._uniqueIndexes: list[_UniqueObjIndex] = []
         self._search_indexes: dict[str, dict[str, list]] = {}
 
         self.import_source_type: ImportSourceType | None = None
@@ -1496,7 +1518,12 @@ class Table[TableContent]:
         return ret
 
     def create_index(
-        self, attr: str, unique: bool = False, accept_none: bool = False, force: bool = False
+        self,
+        attr: str,
+        unique: bool = False,
+        accept_none: bool = False,
+        optional: bool = False,
+        force: bool = False,
     ) -> Self:
         """
         Create a new index on a given attribute.
@@ -1522,9 +1549,12 @@ class Table[TableContent]:
             expected to be unique across table entries
         @type unique: boolean
         @param accept_none: flag indicating whether None is an acceptable
-            unique key value for this attribute (always True for non-unique
-            indexes, default=False for unique indexes)
+            unique key value for this attribute (only meaningful for unique
+            indexes, default=False)
         @type accept_none: boolean
+        @param optional: flag indicating whether the indexed field may be
+            missing, or None with accept_none=True (only meaningful for
+            unique indexes, default=False)
         @param force: flag indicating whether the index should be created
             even it if already exists (default = False)
         @type force: boolean
@@ -1536,27 +1566,19 @@ class Table[TableContent]:
             raise ValueError(f"index {attr!r} already defined for table")
 
         if unique:
-            self._indexes[attr] = _UniqueObjIndex(attr, accept_none)
-            self._uniqueIndexes[:] = [
-                ind for ind in self._indexes.values() if ind.is_unique
-            ]
+            self._indexes[attr] = _UniqueObjIndex(attr, accept_none, optional)
         else:
             self._indexes[attr] = _ObjIndex(attr)
-            accept_none = True
         ind = self._indexes[attr]
 
         try:
             for obj in self.obs:
-                obval = getattr(obj, attr, None)
-                if obval is not None or accept_none:
-                    ind[obval] = obj
-                else:
-                    raise KeyError("None is not an allowed key")
-            return self
-
+                ind.add(obj)
         except (KeyError, TypeError):
             self.drop_index(attr)
             raise
+        
+        return self
 
     def drop_index(self, attr: str) -> Self:
         """
@@ -1567,9 +1589,6 @@ class Table[TableContent]:
         """
         if attr in self._indexes:
             del self._indexes[attr]
-            self._uniqueIndexes = [
-                ind for ind in self._indexes.values() if ind.is_unique
-            ]
         return self
 
     delete_index = drop_index
@@ -1947,9 +1966,6 @@ class Table[TableContent]:
 
     def insert_many(self, it: Iterable[TableContent]) -> Self:
         """Inserts a collection of objects into the table."""
-        unique_indexes = self._uniqueIndexes
-        NO_SUCH_ATTR = object()
-
         new_objs = it
         new_objs, first_obj = itertools.tee(new_objs)
         try:
@@ -1961,42 +1977,11 @@ class Table[TableContent]:
             # iterator is empty, nothing to insert
             return self
 
-        if unique_indexes:
-            new_objs = list(new_objs)
-            for ind in unique_indexes:
-                ind_attr = ind.attr
-                new_keys = {
-                    getattr(obj, ind_attr, NO_SUCH_ATTR): obj for obj in new_objs
-                }
-                if not ind.accept_none and (
-                    None in new_keys or NO_SUCH_ATTR in new_keys
-                ):
-                    raise KeyError(
-                        f"unique key cannot be None or blank for index {ind_attr!r}",
-                        [
-                            ob
-                            for ob in new_objs
-                            if getattr(ob, ind_attr, NO_SUCH_ATTR) is None
-                        ],
-                    )
-                if len(new_keys) < len(new_objs):
-                    raise KeyError(
-                        f"given sequence contains duplicate keys for index {ind_attr!r}"
-                    )
-                for key in new_keys:
-                    if key in ind:
-                        obj = new_keys[key]
-                        raise KeyError(
-                            f"duplicate unique key value {getattr(obj, ind_attr)!r} for index {ind_attr!r}",
-                            new_keys[key],
-                        )
-
         if self._indexes:
             for obj in new_objs:
                 self.obs.append(obj)
-                for attr, ind in self._indexes.items():
-                    obval = getattr(obj, attr, None)
-                    ind[obval] = obj
+                for ind in self._indexes.values():
+                    ind.add(obj)
         else:
             self.obs.extend(new_objs)
 
@@ -2110,7 +2095,6 @@ class Table[TableContent]:
                 kwargs_list.sort(key=self._query_attr_sort_fn)
 
             ret = self
-            NO_SUCH_ATTR = object()
             for k, v in kwargs_list:
                 if callable(v):
                     if getattr(v, "is_comparator", False):
@@ -3782,13 +3766,12 @@ class Table[TableContent]:
         Quick method to list informative table statistics
         :return: dict listing table information and statistics
         """
-        unique_indexes = set(self._uniqueIndexes)
         return {
             "len": len(self),
             "name": self.table_name,
             "fields": self._attr_names(),
             "indexes": [
-                (idx_name, self._indexes[idx_name] in unique_indexes)
+                (idx_name, self._indexes[idx_name].is_unique)
                 for idx_name in self._indexes
             ],
             "created": self.create_time,
