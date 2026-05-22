@@ -2491,7 +2491,7 @@ class Table[TableContent]:
         attrlist: Iterable[str] | str | None = None,
         auto_create_indexes: bool = True,
         **kwargs: Any,
-    ):
+    ) -> Table:
         """
         Join the objects of one table with the objects of another, based on the given
         matching attributes in the named arguments.  The attrlist specifies the attributes to
