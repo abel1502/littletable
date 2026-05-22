@@ -498,10 +498,10 @@ class _UniqueObjIndex(_ObjIndex):
         self.obs_lookup[k] = v
 
     def __getitem__(self, k):
-            return [self.obs_lookup.get(k)] if k in self.obs_lookup else []
+        return [self.obs_lookup.get(k)] if k in self.obs_lookup else []
 
     def __contains__(self, k):
-            return k in self.obs_lookup
+        return k in self.obs_lookup
 
     def keys(self):
         return sorted(self.obs_lookup)
@@ -511,7 +511,7 @@ class _UniqueObjIndex(_ObjIndex):
 
     def remove(self, obj):
         k = getattr(obj, self.attr)
-            self.obs_lookup.pop(k, None)
+        self.obs_lookup.pop(k, None)
 
 
 class _ObjIndexWrapper:
@@ -526,20 +526,18 @@ class _ObjIndexWrapper:
         return getattr(self, attr)
 
     def _getitem_using_slice(self, k):
+        if k.step is not None:
+            raise ValueError("step slicing not supported")
+        
         where_selector = {
-            (False, False, False): lambda: ValueError("must specify start and/or stop values for slice"),
-            (False, True, False): lambda: Table.lt(k.stop),
-            (True, False, False): lambda: Table.ge(k.start),
-            (True, True, False): lambda: (Table.in_range(k.start, k.stop)
+            (False, False): lambda: ValueError("must specify start and/or stop values for slice"),
+            (False, True): lambda: Table.lt(k.stop),
+            (True, False): lambda: Table.ge(k.start),
+            (True, True): lambda: (Table.in_range(k.start, k.stop)
                                           if k.start < k.stop
                                           else ValueError("slice end must be greater than slice start")),
-            (False, False, True): lambda: ValueError("step slicing not supported"),
-            (True, False, True): lambda: ValueError("step slicing not supported"),
-            (False, True, True): lambda: ValueError("step slicing not supported"),
-            (True, True, True): lambda: ValueError("step slicing not supported"),
         }[k.start is not None,
-          k.stop is not None,
-          k.step is not None]()
+          k.stop is not None]()
 
         if isinstance(where_selector, Exception):
             raise where_selector
