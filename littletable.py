@@ -3930,11 +3930,11 @@ class Table[TableContent]:
         return field_names
 
     def _rich_table(
-            self,
-            fields: Iterable[str | tuple[str, dict]] | None = None,
-            empty: Any = "",
-            groupby: str | None = None,
-            **kwargs
+        self,
+        fields: Iterable[str | tuple[str, dict]] | None = None,
+        empty: Any = "",
+        groupby: str | None = None,
+        **kwargs,
     ):
         from rich.table import Table as RichTable
 
