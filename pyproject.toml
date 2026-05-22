@@ -10,7 +10,8 @@ readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.12"
 license = "MIT"
 authors = [
-  { name = "Paul McGuire", email = "ptmcg@austin.rr.com" }
+  { name = "Paul McGuire", email = "ptmcg@austin.rr.com" },
+  { name = "abel1502" }
 ]
 maintainers = [
   { name = "Paul McGuire", email = "ptmcg@austin.rr.com" }
