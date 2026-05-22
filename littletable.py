@@ -695,32 +695,32 @@ class _IndexAccessor:
         If there is no index defined for the given attribute, then C{AttributeError} is raised.
         """
         attr_index = self._table._indexes.get(attr)
-        if attr_index is not None:
-            if isinstance(attr_index, _UniqueObjIndex):
-                attr_index_wrapper = _UniqueObjIndexWrapper(attr_index, self._table)
-                attr_index_wrapper.__doc__ = textwrap.dedent(
-                    f"""\
-                    Index accessor by {attr!r}
-                    
-                    tbl.by.{attr}[attr_value] returns the object having {attr}=attr_value.
-                    If no such object exists, raises KeyError.
-                    """
-                )
+        if attr_index is None:
+            raise AttributeError(f"Table {self._table.table_name!r} has no index {attr!r}")
 
-            else:
-                attr_index_wrapper = _ObjIndexWrapper(attr_index, self._table)
-                attr_index_wrapper.__doc__ = textwrap.dedent(
-                    f"""\
-                    Index accessor by {attr!r}
+        if isinstance(attr_index, _UniqueObjIndex):
+            attr_index_wrapper = _UniqueObjIndexWrapper(attr_index, self._table)
+            attr_index_wrapper.__doc__ = textwrap.dedent(
+                f"""\
+                Index accessor by {attr!r}
+                
+                tbl.by.{attr}[attr_value] returns the object having {attr}=attr_value.
+                If no such object exists, raises KeyError.
+                """
+            )
 
-                    tbl.by.{attr}[attr_value] returns a new Table of all objects having {attr}=attr_value.
-                    If no matching objects exist, returns an empty Table.
-                    """
-                )
+        else:
+            attr_index_wrapper = _ObjIndexWrapper(attr_index, self._table)
+            attr_index_wrapper.__doc__ = textwrap.dedent(
+                f"""\
+                Index accessor by {attr!r}
 
-            return attr_index_wrapper
+                tbl.by.{attr}[attr_value] returns a new Table of all objects having {attr}=attr_value.
+                If no matching objects exist, returns an empty Table.
+                """
+            )
 
-        raise AttributeError(f"Table {self._table.table_name!r} has no index {attr!r}")
+        return attr_index_wrapper
 
     def __call__(self, attr):
         return getattr(self, attr)
