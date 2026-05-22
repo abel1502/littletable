@@ -4276,10 +4276,10 @@ class _PivotTable(Table):
     """Enhanced Table containing pivot results from calling table.pivot()."""
 
     def __init__(
-            self,
-            parent: Table | _PivotTable,
-            attr_val_path: list[tuple[str, str]],
-            attrlist: Iterable[str],
+        self,
+        parent: Table | _PivotTable,
+        attr_val_path: list[tuple[str, str]],
+        attrlist: Iterable[str],
     ):
         """PivotTable initializer - do not create these directly, use
         L{Table.pivot}.
@@ -4341,11 +4341,11 @@ class _PivotTable(Table):
         return bool(self.subtables)
 
     def dump(
-            self,
-            out: TextIO = sys.stdout,
-            row_fn: Callable[[Any], str] = repr,
-            limit: int = -1,
-            indent: int = 0,
+        self,
+        out: TextIO = sys.stdout,
+        row_fn: Callable[[Any], str] = repr,
+        limit: int = -1,
+        indent: int = 0,
     ) -> None:
         """
         Dump out the contents of this table in a nested listing.
@@ -4373,10 +4373,10 @@ class _PivotTable(Table):
         out.flush()
 
     def dump_counts(
-            self,
-            out: TextIO = sys.stdout,
-            count_fn: Callable[[Iterable[Any]], int] = len,
-            colwidth: int = 10
+        self,
+        out: TextIO = sys.stdout,
+        count_fn: Callable[[Iterable[Any]], int] = len,
+        colwidth: int = 10,
     ) -> None:
         """
         Dump out the summary counts of entries in this pivot table as a tabular listing.
@@ -4434,10 +4434,10 @@ class _PivotTable(Table):
             raise ValueError("can only dump summary counts for 1 or 2-attribute pivots")
 
     def as_table(
-            self,
-            fn: Callable | None = None,
-            col: str | None = None,
-            col_label: str | None = None,
+        self,
+        fn: Callable | None = None,
+        col: str | None = None,
+        col_label: str | None = None,
     ) -> Table:
         """Dump out the summary counts of this pivot table as a Table."""
         if col_label is None:
@@ -4488,9 +4488,9 @@ class _PivotTable(Table):
     summary_counts = as_table
 
     def summarize(
-            self,
-            count_fn: Callable[[Iterable], int] = len,
-            col_label: str | None = None,
+        self,
+        count_fn: Callable[[Iterable], int] = len,
+        col_label: str | None = None,
     ) -> _PivotTableSummary:
         if col_label is None:
             if len(self._pivot_attrs) == 1:
