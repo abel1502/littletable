@@ -497,7 +497,7 @@ class _UniqueObjIndex(_ObjIndex):
         if k is None and not self.accept_none:
             if not self.optional:
                 raise ValueError(f"unique key cannot be None or blank for index {self.attr!r}", v)
-            return  # Missing values are not indexed, but 
+            return  # Missing values are not indexed, but simply ignored
         
         if k in self.obs_lookup:
             raise KeyError(f"duplicate key value {k!r}")
