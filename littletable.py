@@ -198,6 +198,16 @@ class ReadonlyIndexAccessError(Exception):
     """
 
 
+class PathNotFoundError(KeyError):
+    def __init__(self, key, nf_path):
+        super().__init__(key)
+        self.key = key
+        self.path = nf_path
+
+    def __str__(self):
+        return f"could not find {self.key!r} element of path {self.path!r} in imported JSON"
+
+
 class AuthenticationWarning(Warning):
     """
     Warning emitted when using authentication credentials with http:// URL.
@@ -1009,6 +1019,41 @@ class FixedWidthReader:
                 if not line.strip():
                     continue
                 yield {label: fn(line[slc]) for label, slc, fn in self._slices}
+
+
+class _JsonFileReader:
+    def __init__(self, src, streaming, path, decoder):
+        self.source = src
+        self.streaming = streaming
+        self.path = path
+        self.decoder = decoder
+
+    def __iter__(self):
+        if self.streaming:
+            # incrementally read lines from source until a valid JSON object
+            # can be parsed
+            current = ""
+            for line in self.source:
+                if current:
+                    current += " "
+                current += line
+                try:
+                    yield json.loads(current, cls=self.decoder)
+                    current = ""
+                except json.JSONDecodeError:
+                    pass
+        else:
+            # merge entire source into one JSON parseable object
+            inbound_json = '\n'.join(self.source)
+            obs = json.loads(inbound_json, cls=self.decoder)
+
+            # descend into parsed JSON object by path
+            for path_item in filter(None, self.path.split(".")):
+                obs = obs.get(path_item)
+                if obs is None:
+                    raise PathNotFoundError(path_item, self.path)
+
+            yield from obs
 
 
 def _make_comparator(cmp_fn: Callable[[Any, Any], bool]) -> Callable[[Any], Callable[[Any], Callable[[Any], bool]]]:
@@ -3217,47 +3262,6 @@ class Table[TableContent]:
         @param limit: maximum number of records to import
         @type limit: int (optional)
         """
-        class PathNotFoundError(KeyError):
-            def __init__(self, key, nf_path):
-                super().__init__(key)
-                self.key = key
-                self.path = nf_path
-
-            def __str__(self):
-                return f"could not find {self.key!r} element of path {self.path!r} in imported JSON"
-
-        class _JsonFileReader:
-            def __init__(self, src):
-                self.source = src
-                self.streaming = streaming
-
-            def __iter__(self):
-                if self.streaming:
-                    # incrementally read lines from source until a valid JSON object
-                    # can be parsed
-                    current = ""
-                    for line in self.source:
-                        if current:
-                            current += " "
-                        current += line
-                        try:
-                            yield json.loads(current, cls=json_decoder)
-                            current = ""
-                        except json.JSONDecodeError:
-                            pass
-                else:
-                    # merge entire source into one JSON parseable object
-                    inbound_json = '\n'.join(self.source)
-                    obs = json.loads(inbound_json, cls=json_decoder)
-
-                    # descend into parsed JSON object by path
-                    for path_item in filter(None, path.split(".")):
-                        obs = obs.get(path_item)
-                        if obs is None:
-                            raise PathNotFoundError(path_item, path)
-
-                    yield from obs
-
         if isinstance(source, str):
             if source.endswith(".jsonl"):
                 streaming = True
@@ -3282,7 +3286,7 @@ class Table[TableContent]:
             source,
             encoding,
             transforms=transforms,
-            reader=_JsonFileReader,
+            reader=partial(_JsonFileReader, streaming=streaming, path=path, decoder=json_decoder),
             row_class=row_class,
             url_args=url_args,
             limit=limit,
