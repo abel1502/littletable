@@ -44,6 +44,9 @@ Version 3.1.0 (under development)
 - Refactored most of the code: extract inline definitions into the global scope, 
   normalize the indentation, simplify some implementations, refactored the index classes
 
+- Fixed index pollution when one of the indexes rejected an entry after it was
+  already persisted in others
+
 
 Version 3.0.2
 -------------
