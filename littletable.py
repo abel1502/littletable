@@ -574,8 +574,9 @@ class _UniqueObjIndexWrapper(_ObjIndexWrapper):
         if isinstance(k, slice):
             return super().__getitem__(k)
         try:
-            return self._index[k][0]
-        except IndexError:
+            only_item, = self._index[k]
+            return only_item
+        except ValueError:
             raise KeyError(f"no such value {k!r} in index {self._index.attr!r}")
 
 
