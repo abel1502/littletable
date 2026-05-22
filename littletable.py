@@ -149,7 +149,7 @@ from types import SimpleNamespace
 import urllib.request
 from typing import (
     Callable, Any, TextIO, Iterable, Iterator,
-    TypeVar, Type, cast, Tuple, overload, Self
+    TypeVar, Type, cast, overload, Self
 )
 
 from rich import box
@@ -911,10 +911,10 @@ class _MultiIterator(Iterator):
             yield line.decode(encoding)
 
 
-FixedWidthParseSpec = (
-    Tuple[str, int]
-    | Tuple[str, int, int | None]
-    | Tuple[str, int, int | None, Callable[[str], Any] | None]
+type FixedWidthParseSpec = (
+    tuple[str, int]
+    | tuple[str, int, int | None]
+    | tuple[str, int, int | None, Callable[[str], Any] | None]
 )
 
 
@@ -3567,7 +3567,7 @@ class Table[TableContent]:
             self,
             keyexpr: str | Iterable[str] | Callable[[TableContent], Any],
             sort: bool = False
-    ) -> Iterable[Tuple[Any, Table[TableContent]]]:
+    ) -> Iterable[tuple[Any, Table[TableContent]]]:
         """
         Analogous to itertools.groupby, using the Table as the iterable to be
         grouped.
