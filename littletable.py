@@ -1040,7 +1040,7 @@ def _make_comparator_null(is_null: bool) -> Callable[[], Callable[[str], Callabl
 
 
 def _make_comparator2(
-        cmp_fn: Callable[[Any, Any, Any], bool]
+    cmp_fn: Callable[[Any, Any, Any], bool],
 ) -> Callable[[Any, Any], Callable[[str], Callable[[Any], bool]]]:
     """
     Internal function to help define Table.within and between
