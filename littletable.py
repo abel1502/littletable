@@ -143,7 +143,7 @@ import statistics
 import sys
 from collections import defaultdict, namedtuple, Counter
 from collections.abc import Mapping, Sequence
-from functools import partial
+from functools import partial, cmp_to_key
 from pathlib import Path
 from types import SimpleNamespace
 import urllib.request
@@ -447,6 +447,7 @@ class _ObjIndex:
         return iter(self.obs_lookup)
 
     def keys(self) -> list[Any]:
+        # TODO: Is sorting necessary? (same question as below). Discarding None might be undesirable either way.
         return sorted(filter(partial(operator.ne, None), self.obs_lookup))
 
     def items(self) -> Iterable[tuple[Any, Any]]:
@@ -511,7 +512,17 @@ class _UniqueObjIndex(_ObjIndex):
             return k in self.obs_lookup
 
     def keys(self):
-        return sorted(self.obs_lookup)
+        # The keys are not guaranteed to be comparable in the first place,
+        # and now that None is an option, this will often come up.
+        # This is a robust way to compare just about anything, but it may be meaningless semantically.
+        # TODO: Do we need to sort the keys at all? Perhaps insertion order is fine?
+        def cmp(a, b) -> int:
+            try:
+                return (a > b) - (a < b)
+            except:
+                return id(a) - id(b)
+        
+        return sorted(self.obs_lookup, key=cmp_to_key(cmp))
 
     def items(self):
         return ((k, [v]) for k, v in self.obs_lookup.items())
