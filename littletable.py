@@ -4016,12 +4016,12 @@ class Table[TableContent]:
         return rt
 
     def present(
-            self,
-            fields: Iterable[str | tuple[str, dict]] | None = None,
-            file: TextIO | None = None,
-            groupby: str | None = None,
-            width: int | None = None,
-            **kwargs: Any
+        self,
+        fields: Iterable[str | tuple[str, dict]] | None = None,
+        file: TextIO | None = None,
+        groupby: str | None = None,
+        width: int | None = None,
+        **kwargs: Any,
     ) -> None:
         """
         Print a nicely-formatted table of the records in the Table, using the `rich`
