@@ -4049,11 +4049,11 @@ class Table[TableContent]:
             console.print(table)
 
     def as_html(
-            self,
-            fields: str | Iterable[str] = "*",
-            formats: dict[str, str] | None = None,
-            groupby: str | Iterable[str] | None = None,
-            table_properties: dict | None = None,
+        self,
+        fields: str | Iterable[str] = "*",
+        formats: dict[str, str] | None = None,
+        groupby: str | Iterable[str] | None = None,
+        table_properties: dict | None = None,
     ) -> str:
         """
         Output the table as a rudimentary HTML table.
