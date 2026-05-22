@@ -38,6 +38,12 @@ Version 3.1.0 (under development)
 
 - Some improved type annotations.
 
+- Added `optional` parameter to `Table.create_index` to define unique indexes that
+  allow missing values in some objects.
+
+- Refactored most of the code: extract inline definitions into the global scope, 
+  normalize the indentation, simplify some implementations, refactored the index classes
+
 
 Version 3.0.2
 -------------
