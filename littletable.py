@@ -4488,18 +4488,18 @@ class _PivotTable(Table):
 
 class _PivotTableSummary:
     def __init__(
-            self,
-            pivot_table: _PivotTable,
-            pivot_attrs: list[str],
-            count_fn: Callable[[Iterable], int] = len,
-            col_label: str | None = None,
+        self,
+        pivot_table: _PivotTable,
+        pivot_attrs: list[str],
+        count_fn: Callable[[Iterable], int] = len,
+        col_label: str | None = None,
     ):
         self._pt = pivot_table
         self._pivot_attrs = pivot_attrs
         self._fn = count_fn
         self._label = col_label
 
-    def as_html(self, **kwargs):
+    def as_html(self, **kwargs) -> str:
         formats = kwargs.get("formats", {})
         if len(self._pivot_attrs) == 1:
             col = self._pivot_attrs[0]
