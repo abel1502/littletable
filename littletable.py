@@ -530,7 +530,7 @@ class _UniqueObjIndex(_ObjIndex):
         try:
             self[k] = obj
         except KeyError:
-            raise KeyError(f"duplicate unique key value {k!r} for index {self!r}", obj)
+            raise KeyError(f"duplicate unique key value {k!r} for index {self.attr!r}", obj) from None
 
     def remove(self, obj):
         k = getattr(obj, self.attr)
@@ -1964,24 +1964,27 @@ class Table[TableContent]:
         """
         return self.insert_many([obj])
 
-    def insert_many(self, it: Iterable[TableContent]) -> Self:
+    def insert_many(self, new_objs: Iterable[TableContent]) -> Self:
         """Inserts a collection of objects into the table."""
-        new_objs = it
-        new_objs, first_obj = itertools.tee(new_objs)
-        try:
-            first = next(first_obj)
-            if isinstance(first, dict):
-                # passed in a list of dicts, save as attributed objects
-                new_objs = (self._wrap_dict(obj) for obj in new_objs)
-        except StopIteration:
-            # iterator is empty, nothing to insert
-            return self
-
+        
         if self._indexes:
             for obj in new_objs:
+                if isinstance(obj, dict):
+                    obj = self._wrap_dict(obj)
+                
+                try:
+                    for ind in self._indexes.values():
+                        ind.add(obj)
+                except:
+                    # Improvised rollback
+                    failing_ind = ind
+                    for ind in self._indexes.values():
+                        if ind is failing_ind:
+                            break
+                        ind.remove(obj)
+                    raise
+                
                 self.obs.append(obj)
-                for ind in self._indexes.values():
-                    ind.add(obj)
         else:
             self.obs.extend(new_objs)
 
