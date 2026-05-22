@@ -2235,9 +2235,9 @@ class Table[TableContent]:
         return self
 
     def select(
-            self,
-            fields: Iterable[str] | str | None = None,
-            **exprs: Callable[[TableContent], Any]
+        self,
+        fields: Iterable[str] | str | None = None,
+        **exprs: Callable[[TableContent], Any],
     ) -> Table:
         """
         Create a new table containing a subset of attributes, with optionally
@@ -2255,10 +2255,10 @@ class Table[TableContent]:
         as a source of interpolation values.  For instance, C{fullName = '%(lastName)s, %(firstName)s'}
 
         """
-        if fields is not None:
-            fields = self._parse_fields_string(fields)
-        else:
+        if fields is None:
             fields = []
+        else:
+            fields = self._parse_fields_string(fields)
 
         def _make_string_callable(expr):
             if isinstance(expr, str):
@@ -2267,8 +2267,8 @@ class Table[TableContent]:
                     if not isinstance(r, (list, tuple))
                     else expr.format(*r)
                 )
-            else:
-                return expr
+            
+            return expr
 
         exprs = {k: _make_string_callable(v) for k, v in exprs.items()}
 
