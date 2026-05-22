@@ -1837,13 +1837,13 @@ class Table[TableContent]:
         return self
 
     def _search(
-            self,
-            attrname: str,
-            query: str,
-            limit: int = int(1e9),
-            min_score: int = 0,
-            include_words: bool = False,
-            as_table: bool = True
+        self,
+        attrname: str,
+        query: str,
+        limit: int = int(1e9),
+        min_score: int = 0,
+        include_words: bool = False,
+        as_table: bool = True,
     ):
         if attrname not in self._search_indexes:
             raise ValueError(f"no search index defined for attribute {attrname!r}")
