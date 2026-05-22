@@ -2320,7 +2320,7 @@ class Table[TableContent]:
 
         return self.select(**select_exprs)
 
-    def format(self, fmt: str):
+    def format(self, fmt: str) -> Iterable[str]:
         """
         Generates a list of strings, one for each row in the table, using the input string
         as a format template for printing out a single row.
