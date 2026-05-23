@@ -545,7 +545,7 @@ class _UniqueObjIndex(_ObjIndex):
 
     def remove(self, obj):
         k = getattr(obj, self.attr)
-            self.obs_lookup.pop(k, None)
+        self.obs_lookup.pop(k, None)
 
 
 class _ObjIndexWrapper:
